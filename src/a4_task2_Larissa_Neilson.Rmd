@@ -1,0 +1,229 @@
+---
+title: "Mini exploratory report on juvenile snowshoe hares in Bonanza Creek"
+author: "Larissa Neilson"
+date: "11/16/2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+library(here)
+library(janitor)
+library(lubridate)
+library(kableExtra)
+library(effsize)
+library(broom)
+library(ggpubr)
+```
+
+# Introduction
+
+A 4 - 5 sentence "mini-introduction" to what this study is exploring, including basic background information about the subject, site and study (with citations as needed), and a brief overview of what is included in the exploratory report. You should probably do this last.
+
+# Data and analyses
+
+A 3 - 4 sentence section in which you briefly describe the data, including citation & credit as needed, and provide an overview of the main analysis, statistical methods and tools used.
+
+# Exploratory findings
+
+## Annual juvenile hare trap counts
+
+```{r}
+bonanza_hares <- read.csv(here("data", "bonanza_hares.csv")) %>% 
+  clean_names()
+```
+
+
+```{r}
+juvenile_data <- bonanza_hares %>% 
+  filter(age == "j") %>% 
+  mutate(date_new = mdy(date)) %>%
+  mutate(year_new = year(date_new)) %>% 
+  mutate(grid_full = case_when(
+    grid == "bonbs" ~ "Black Spruce Stand",
+    grid == "bonmat" ~ "Bonanza Mature",
+    grid == "bonrip" ~ "Bonanza Riparian"
+  ))
+```
+
+```{r}
+annual_juvenile_counts <- juvenile_data %>% 
+  count(year_new)
+```
+
+### Bar graph of juvenile hare counts per year
+
+```{r}
+ggplot(data = annual_juvenile_counts, aes(x = year_new, y = n)) +
+  geom_col(fill = "darkgreen") +
+  labs(x = NULL, y = "Juvenile Hare Count") +
+  scale_x_continuous(breaks = c(1998:2012)) +
+  theme_minimal()
+```
+
+```{r}
+juvenile_count_stats <- annual_juvenile_counts %>%
+  summarize(mean_n = mean(n),
+            median_n = median(n))
+```
+
+During some years (1998, 2002, and 2009), there were no juveniles trapped at the sites. The year 1999 had the most juvenile trappings (n = 126).
+
+```{r}
+juvenile_weight_stats <- juvenile_data %>% 
+  group_by(sex, grid_full) %>% 
+  summarize(mean_w = mean(weight, na.rm = T))
+
+kbl(juvenile_weight_stats) %>% 
+  kable_styling()
+```
+
+## Visualizing juvenile hare weights
+
+### Bar graph of juvenile hare weights by sex and site
+
+```{r}
+ggplot(data = juvenile_data, aes(fill = sex, y = weight,  x = sex)) +
+  geom_jitter(width = 0.2, alpha = 0.5) +
+  labs(x = NULL, y = "Weight (grams)") +
+  scale_x_discrete(labels = c("Female", "Male", "Unspecified")) +
+  facet_wrap(~ grid_full) +
+  theme(legend.position = "none") +
+  geom_point(data = juvenile_weight_stats, aes(x = sex, y = mean_w), color = "red")
+
+# position = "dodge", stat = "identity" (for geom_bar())
+```
+
+## Juvenile weight comparison
+
+### Exploratory graphs
+
+```{r}
+# Histogram
+ggplot(data = juvenile_data, aes(x = weight)) +
+  geom_histogram(bins = 15) +
+  facet_wrap(~ sex)
+
+# QQ-plot
+ggplot(data = juvenile_data, aes(sample = weight)) +
+  geom_qq()
+  facet_wrap(~ sex)
+```
+
+### Get summary statistics
+ 
+```{r}
+juvenile_weight_comp <- juvenile_data %>% 
+  group_by(sex) %>% 
+  summarize(mean_weight = mean(weight, na.rm = T),
+            sd_weight = sd(weight, na.rm = T),
+            median_weight = median(weight, na.rm = T),
+            n = n())
+
+kbl(juvenile_weight_comp) %>% 
+  kable_styling()
+```
+
+### Actual difference in means
+
+```{r}
+actual_diff <- (945.8589 - 855.3909)
+pct_diff <- (945.8589 - 855.3909)/ (855.3909) * 100
+```
+
+### Get vectors
+
+```{r}
+juveniles_f <- juvenile_data %>% 
+  filter(sex == "f") %>% 
+  pull(weight)
+
+juveniles_m <- juvenile_data %>% 
+  filter(sex == "m") %>% 
+  pull(weight)
+```
+
+### T-test and effect size
+
+```{r}
+juvenile_hares_ttest <- t.test(juveniles_f, juveniles_m, na.rm = T)
+juvenile_hares_ttest
+
+cohen.d(juveniles_m, juveniles_f, na.rm = T)
+
+```
+
+## Relationship between juvenile weight and hind foot length
+
+### Exploring linearity
+
+```{r}
+ggplot(data = juvenile_data, aes(x = hindft, y = weight)) +
+  geom_point()
+```
+
+### Linear model
+
+```{r}
+juvenile_hares_lm <- lm(weight ~ hindft, data = juvenile_data)
+
+summary(juvenile_hares_lm)
+```
+
+### Access model outputs
+
+```{r}
+juvenile_hares_lm_tidy <- tidy(juvenile_hares_lm)
+```
+
+Get the intercept
+
+```{r}
+juvenile_hares_int <- juvenile_hares_lm_tidy$estimate[1]
+juvenile_hares_int
+```
+
+Get coefficient
+
+```{r}
+juvenile_hares_coef <- juvenile_hares_lm_tidy$estimate[2]
+juvenile_hares_coef
+```
+
+Get some other model information (degrees of freedom, F-statistic, p-value, etc)
+
+```{r}
+juvenile_hares_out <- glance(juvenile_hares_lm)
+juvenile_hares_out
+```
+
+### Visualize the model
+
+```{r}
+ggplot(data = juvenile_data, aes(x = weight, y = hindft)) +
+  geom_point(size = 1.5) +
+  geom_smooth(method = "lm",
+              color = "red",
+              size = 0.5,
+              fill = "gray10",
+              alpha = 0.5) +
+  theme_light() +
+  stat_regline_equation(label.x = 9.5, label.y = 280)
+```
+
+### Pearson's r
+
+```{r}
+juvenile_hares_cor <- cor.test(juvenile_data$hindft, juvenile_data$weight)
+
+juvenile_hares_cor
+```
+
+Moderate correlation
+
+# Summary
+
+# Citation 
+
+Kielland, K., F.S. Chapin, R.W. Ruess, and Bonanza Creek LTER. 2017. Snowshoe hare physical data in Bonanza Creek Experimental Forest: 1999-Present ver 22. Environmental Data Initiative.
