@@ -19,11 +19,11 @@ library(ggpubr)
 
 ## Introduction
 
-This report provides an exploratory overview of the differences in juvenile snowshoe hare sizes observed at the Bonanza Creek Experimental Forest (Long Term Ecological Research site). Snowshoe hares, *Lepus americanus*, are an important keystone prey species in northern boreal forests. Changes in hare densities have been show to to intensely affect both vegetation and predators. However, landscape-scale comparisons of hare populations in Alaska have been limited to qualitative descriptions. This overview explores 1) the comparison of juvenile hare weight between males and females, and 2) the relationship between juvenile hare hind foot length and weight (Kielland et  al. 2017).
+This report provides an exploratory overview of the differences in juvenile snowshoe hare weight observed at the Bonanza Creek Experimental Forest (Long Term Ecological Research site). Snowshoe hares, *Lepus americanus*, are an important keystone prey species in northern boreal forests. Changes in hare densities have been show to to intensely affect both vegetation and predators. However, landscape-scale comparisons of hare populations in Alaska have been limited to qualitative descriptions. This overview explores 1) the comparison of juvenile hare weight between males and females, and 2) the relationship between juvenile hare hind foot length and weight (Kielland et  al. 2017).
 
 ## Data and analyses
 
-Snowshoe hare size measurements were collected at the Bonanza Creek Long Term Ecological Research (LTER) network site. The data contain observations for 3,197 snowshoe hares collected at three sites (Bonanza riparian, Bonanza mature, and a mature lowland Black Spruce stand) from 1998-2012. After initial exploratory data visualization, male and female juvenile snowshoe hare weights are compared by two-sample t-tests using a significance level (α) of 0.05. Furthermore, differences between the groups are described by Cohen’s d effect size. The relationship between hind foot length and weight is explored by simple linear regression. All analyses are in R version 4.0.2 using RStudio version 1.3.1073.
+Snowshoe hare size measurements were collected at the Bonanza Creek Long Term Ecological Research (LTER) network site. The data contain observations for 3,197 snowshoe hares collected at three sites (Bonanza riparian, Bonanza mature, and a mature lowland Black Spruce stand) from 1998-2012. After initial exploratory data visualization, male and female juvenile snowshoe hare weights are compared by two-sample t-tests using a significance level (α) of 0.05, and differences between the groups are described by Cohen’s d effect size. Finally, the relationship between hind foot length and weight is explored by simple linear regression. All analyses are in R version 4.0.2 using RStudio version 1.3.1073.
 
 ```{r, include = FALSE}
 # Read in Bonanza hares data set and convert column names to tidy format
@@ -81,9 +81,6 @@ Due to the unequal number of days and traps studied each year, these annual trap
 juvenile_weight_stats <- juvenile_data %>% 
   group_by(sex, grid_full) %>% 
   summarize(mean_weight = mean(weight, na.rm = T))
-
-kbl(juvenile_weight_stats) %>% 
-  kable_styling()
 ```
 
 ### Comparison of juvenile hare weights by sex and site
@@ -169,11 +166,15 @@ On average, juvenile male snowshoe hares are bigger than juvenile female snowsho
 
 ### Relationship between juvenile hare weight and hind foot length
 
-```{r, include = FALSE}
+```{r, echo = FALSE, message = FALSE, warning = FALSE}
 # Explore linearity - data does not appear to be strongly linearly correlated
 ggplot(data = juvenile_data, aes(x = hindft, y = weight)) +
-  geom_point()
+  geom_point() +
+  labs(x = "Hind foot length (mm)", y = "Weight (g)") +
+  theme_minimal()
 ```
+
+**Figure 3.** Relationship between juvenile snowshoe hare weight and hind foot length. Data: Kielland et  al. (2017).
 
 ```{r, include =  FALSE}
 # Linear model
@@ -222,9 +223,9 @@ juvenile_hares_cor <- cor.test(juvenile_data$hindft, juvenile_data$weight)
 juvenile_hares_cor
 ```
 
-**Figure 3.** Relationship between hind foot length (mm) and weight (g) for juvenile snowshoe hares. Linear model summary: $\beta$~1~ = `r round(juvenile_hares_lm_tidy$estimate[2], 2)` g mm^-1^, p < 0.001, R^2^ = `r round(juvenile_hares_out$r.squared,2)`, Pearson's *r* = `r round(juvenile_hares_cor$estimate,2)`). Data: Kielland et  al. (2017).
+**Figure 4.** Linear model of the relationship between weight (g) and hind foot length (mm) for juvenile snowshoe hares. Linear model summary: $\beta$~1~ = `r round(juvenile_hares_lm_tidy$estimate[2], 2)` g mm^-1^, p < 0.001, R^2^ = `r round(juvenile_hares_out$r.squared,2)`, Pearson's *r* = `r round(juvenile_hares_cor$estimate,2)`). Data: Kielland et  al. (2017).
 
-The relationship between juvenile snowshoe hare hind foot length and weight does not appear to be strongly linearly correlated (Figure 3). Simple linear regression revealed that hind foot length does not predict juvenile snowshoe hare weight (p < 0.001, R^2^ = `r round(juvenile_hares_out$r.squared,2)`) with an average slope of $\beta$ = `r round(juvenile_hares_lm_tidy$estimate[2], 2)` g mm^-1^ (i.e., for each one millimeter increase in hind foot length we expect an average increase in weight of `r round(juvenile_hares_lm_tidy$estimate[2], 2)` g). Hind foot length and weight are moderately positively correlated (Pearson's *r* = `r round(juvenile_hares_cor$estimate,2)`, p < 0.001). Diagnostic plots (not included) reveal heteroscedastic residuals.
+The relationship between juvenile snowshoe hare hind foot length and weight does not appear to be strongly linearly correlated (Figure 3). Simple linear regression revealed that hind foot length does not predict juvenile snowshoe hare weight (p < 0.001, R^2^ = `r round(juvenile_hares_out$r.squared,2)`) with an average slope of $\beta$ = `r round(juvenile_hares_lm_tidy$estimate[2], 2)` g mm^-1^ (i.e., for each one millimeter increase in hind foot length we expect an average increase in weight of `r round(juvenile_hares_lm_tidy$estimate[2], 2)` g) (Figure 4). Hind foot length and weight are moderately positively correlated (Pearson's *r* = `r round(juvenile_hares_cor$estimate,2)`, p < 0.001). Diagnostic plots (not included) reveal heteroscedastic residuals.
 
 These results suggest that a linear relationship is not the best way to interpret the data. The residuals are not evenly distributed about the trend line, and seem to be heteroscedastic (they do not having a constant variance throughout the model) and the qq-plot indicates that the residuals are non-linear.
 
