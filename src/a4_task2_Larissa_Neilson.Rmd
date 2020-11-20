@@ -19,7 +19,7 @@ library(ggpubr)
 
 ## Introduction
 
-This report provides an exploratory overview of the differences in juvenile snowshoe hare sizes observed at the Bonanza Creek Experimental Forest (Long Term Ecological Research site). This overview explores 1) the comparison of juvenile hare weight between males and females, and 2) the relationship between juvenile hare hind foot length and weight (Kielland et  al. 2017).
+This report provides an exploratory overview of the differences in juvenile snowshoe hare sizes observed at the Bonanza Creek Experimental Forest (Long Term Ecological Research site). Snowshoe hares, *Lepus americanus*, are an important keystone prey species in northern boreal forests. Changes in hare densities have been show to to intensely affect both vegetation and predators. However, landscape-scale comparisons of hare populations in Alaska have been limited to qualitative descriptions. This overview explores 1) the comparison of juvenile hare weight between males and females, and 2) the relationship between juvenile hare hind foot length and weight (Kielland et  al. 2017).
 
 ## Data and analyses
 
